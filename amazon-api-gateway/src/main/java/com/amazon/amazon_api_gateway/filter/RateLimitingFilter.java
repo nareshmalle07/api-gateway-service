@@ -36,6 +36,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        long currentTime = System.currentTimeMillis();
         // Step 1: Identify the client
         String clientId = getClientId(request);
 
@@ -66,7 +67,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     probe.getRemainingTokens()
             );
 
-            filterChain.doFilter(request, response);
+            try {
+                filterChain.doFilter(request, response);
+            }finally{
+                log.info(
+                        "RateLimiting filter - Completed Request -> Method: {}, URI: {}, Status: {}, Duration: {} ms",
+                        request.getMethod(),
+                        request.getRequestURI(),
+                        response.getStatus(),
+                        (System.currentTimeMillis() - currentTime)
+                );
+            }
+
 
             return;
         }
